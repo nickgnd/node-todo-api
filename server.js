@@ -1,8 +1,8 @@
 var express = require('express');
+var findElement = require('./findElement.js');
 var app = express();
 var PORT = process.env.PORT || 3000;
 
-// todos will be our model
 var todos = [{
   id: 1,
   description: 'Cooks for everybody',
@@ -17,7 +17,6 @@ var todos = [{
   completed: true
 }];
 
-
 app.get('/', function(req, res) {
   res.send("Todo API Root");
 });
@@ -31,24 +30,10 @@ app.get('/todos', function(req, res) {
 app.get('/todos/:id', function(req, res) {
   var todoId = parseInt(req.params.id, 10);
 
-  function findElementInArray(id, todos) {
-    return new Promise(function (resolve, reject) {
-      var match = false;
-      todos.some(function (e) {
-        if (e.id === todoId) {
-          match = true;
-          resolve(e);
-        }
-      });
-      if (!match) {
-        reject('Element not found');
-      }
-    });
-  }
-
-  findElementInArray(todoId, todos).then(function(todo) {
+  findElement(todoId, todos).then(function(todo) {
     res.json(todo);
-  }).catch(function() {
+  }).catch(function(e) {
+    console.log(e);
     res.status(404).send();
   });
 
