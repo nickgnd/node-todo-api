@@ -39,17 +39,34 @@ app.get('/todos/:id', function(req, res) {
 app.post('/todos', function(req, res) {
   body = req.body;
 
+  // whitelistening element
+  body = _.pick(body, 'completed', 'description');
+
   if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
     return res.status(400).send();
   }
 
-
-
   body.id = todoNextId++; // before set body.id equal to todoNextId and then increment it
+
+  // trim body.description
+  body.description = body.description.trim();
   todos.push(body);
 
-  // res.status(201).send();
-  res.json(body);
+  res.status(201).json(body);
+});
+
+
+// DELETE - /todos/:id
+app.delete('/todos/:id', function(req, res) {
+  var todoId = parseInt(req.params.id, 10);
+  var matchedTodo = _.findWhere(todos, {id: todoId});
+
+  if (matchedTodo) {
+    todos = _.without(todos, matchedTodo)
+    res.status(204).send();
+  } else {
+    res.status(404).json({"error": "element not found"});
+  }
 });
 
 app.listen(PORT, function () {
