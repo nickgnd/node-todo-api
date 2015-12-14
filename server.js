@@ -37,10 +37,10 @@ app.get('/todos/:id', function(req, res) {
 
 // POST - /todos
 app.post('/todos', function(req, res) {
-  body = req.body;
+  var body = req.body;
 
   // whitelistening element
-  body = _.pick(body, 'completed', 'description');
+  var body = _.pick(body, 'completed', 'description');
 
   if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
     return res.status(400).send();
@@ -53,6 +53,44 @@ app.post('/todos', function(req, res) {
   todos.push(body);
 
   res.status(201).json(body);
+});
+
+// PUT - /todos/:id
+app.put('/todos/:id', function(req, res) {
+  var body = req.body;
+  var todoId = parseInt(req.params.id, 10);
+  var matchedTodo = _.findWhere(todos, {id: todoId});
+  // whitelistening element
+  var body = _.pick(body, 'completed', 'description');
+  var validAttributes = {};
+
+
+  if (!matchedTodo) {
+    return res.status(404).send(); // IMPORTANT: user return to exit from the block, otherwise it continue
+  }
+
+  if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
+    console.log("here");
+    console.log(_.isBoolean(body.completed));
+    validAttributes.completed = body.completed;
+  } else if (body.hasOwnProperty('completed')) {
+    // is not valid
+    return res.status(422).json({"error": "unprocessable entity"});
+  }
+
+  if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
+    validAttributes.description = body.description;
+  } else if (body.hasOwnProperty('description')) {
+    // is not valid
+    return res.status(422).json({"error": "unprocessable entity"});
+  }
+
+
+  _.extend(matchedTodo, validAttributes);
+  id = matchedTodo.id
+  res.status(204).location('/todos/' + id).send();
+
+
 });
 
 
