@@ -22,11 +22,14 @@ app.get('/todos', function(req, res) {
   var queryParams = req.query;
   var filteredTodos = todos;
 
-  if (queryParams && queryParams.hasOwnProperty('completed') && _.contains(['true', 'false'], queryParams.completed)) {
+  if (queryParams.hasOwnProperty('completed') && _.contains(['true', 'false'], queryParams.completed)) {
     filteredTodos = _.where(filteredTodos, {completed: eval(queryParams.completed)});
-  } else {
-    // no todos find with query
-    filteredTodos = [];
+  }
+
+  if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
+    filteredTodos = _.filter(filteredTodos, function (todo) {
+      return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
+    });
   }
 
   res.json(filteredTodos);
