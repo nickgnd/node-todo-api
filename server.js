@@ -23,11 +23,13 @@ app.get('/todos', function(req, res) {
   var filteredTodos = todos;
 
   if (queryParams.hasOwnProperty('completed') && _.contains(['true', 'false'], queryParams.completed)) {
-    filteredTodos = _.where(filteredTodos, {completed: eval(queryParams.completed)});
+    filteredTodos = _.where(filteredTodos, {
+      completed: eval(queryParams.completed)
+    });
   }
 
   if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
-    filteredTodos = _.filter(filteredTodos, function (todo) {
+    filteredTodos = _.filter(filteredTodos, function(todo) {
       return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
     });
   }
@@ -38,7 +40,9 @@ app.get('/todos', function(req, res) {
 // GET - /todos/:id
 app.get('/todos/:id', function(req, res) {
   var todoId = parseInt(req.params.id, 10);
-  var matchedTodo = _.findWhere(todos, {id: todoId});
+  var matchedTodo = _.findWhere(todos, {
+    id: todoId
+  });
 
   if (matchedTodo) {
     res.json(matchedTodo);
@@ -72,7 +76,9 @@ app.post('/todos', function(req, res) {
 app.put('/todos/:id', function(req, res) {
   var body = req.body;
   var todoId = parseInt(req.params.id, 10);
-  var matchedTodo = _.findWhere(todos, {id: todoId});
+  var matchedTodo = _.findWhere(todos, {
+    id: todoId
+  });
   // whitelistening element
   var body = _.pick(body, 'completed', 'description');
   var validAttributes = {};
@@ -88,14 +94,18 @@ app.put('/todos/:id', function(req, res) {
     validAttributes.completed = body.completed;
   } else if (body.hasOwnProperty('completed')) {
     // is not valid
-    return res.status(422).json({"error": "unprocessable entity"});
+    return res.status(422).json({
+      "error": "unprocessable entity"
+    });
   }
 
   if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
     validAttributes.description = body.description;
   } else if (body.hasOwnProperty('description')) {
     // is not valid
-    return res.status(422).json({"error": "unprocessable entity"});
+    return res.status(422).json({
+      "error": "unprocessable entity"
+    });
   }
 
 
@@ -110,16 +120,20 @@ app.put('/todos/:id', function(req, res) {
 // DELETE - /todos/:id
 app.delete('/todos/:id', function(req, res) {
   var todoId = parseInt(req.params.id, 10);
-  var matchedTodo = _.findWhere(todos, {id: todoId});
+  var matchedTodo = _.findWhere(todos, {
+    id: todoId
+  });
 
   if (matchedTodo) {
     todos = _.without(todos, matchedTodo)
     res.status(204).send();
   } else {
-    res.status(404).json({"error": "element not found"});
+    res.status(404).json({
+      "error": "element not found"
+    });
   }
 });
 
-app.listen(PORT, function () {
+app.listen(PORT, function() {
   console.log("Express listening on PORT " + PORT);
 });
