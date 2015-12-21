@@ -39,16 +39,17 @@ app.get('/todos', function(req, res) {
 // GET - /todos/:id
 app.get('/todos/:id', function(req, res) {
   var todoId = parseInt(req.params.id, 10);
-  var matchedTodo = _.findWhere(todos, {
-    id: todoId
+
+  // search for known id
+  db.todo.findById(todoId).then(function(todo) {
+    if (!!todo) {
+      res.status(200).json(todo.toJSON());
+    } else {
+      res.status(404).send();
+    }
+  }, function (e) {
+    res.status(500).send();
   });
-
-  if (matchedTodo) {
-    res.json(matchedTodo);
-  } else {
-    res.status(404).send();
-  }
-
 });
 
 // POST - /todos
@@ -63,7 +64,7 @@ app.post('/todos', function(req, res) {
     res.status(201).json(todo.toJSON());
   }, function (e) { // error callback
     res.status(422).json(e);
-  })
+  });
 
   // // with promises ?
   // db.todo.create({
