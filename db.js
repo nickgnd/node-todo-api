@@ -1,6 +1,8 @@
 // return db connection
 
 var Sequelize = require('sequelize');
+
+// NODE_ENV --> Heroku environment variable
 var env = process.env.NODE_ENV || 'development';
 var sequelize;
 

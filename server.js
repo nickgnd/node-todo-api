@@ -28,6 +28,8 @@ app.get('/todos', function(req, res) {
 
   if (query.hasOwnProperty('q') && query.q.length > 0) {
     where.description = {
+      // NOT WORK ON POSTGRES -> use $iLike instead
+      // http://docs.sequelizejs.com/en/latest/docs/querying/#operators
       $like: '%' + query.q + '%'
     }
   }
@@ -130,18 +132,21 @@ app.put('/todos/:id', function(req, res) {
 // DELETE - /todos/:id
 app.delete('/todos/:id', function(req, res) {
   var todoId = parseInt(req.params.id, 10);
-  var matchedTodo = _.findWhere(todos, {
-    id: todoId
+
+  db.todo.destroy({
+    where: { id: todoId }
+  }).then(function (rowsDeleted) {
+    if (rowsDeleted === 0) {
+      res.status(404).json({
+        "error": "element not found"
+      });
+    } else {
+      res.status(204).send();
+    }
+  }, function (e) {
+    res.status(500).json(e);
   });
 
-  if (matchedTodo) {
-    todos = _.without(todos, matchedTodo)
-    res.status(204).send();
-  } else {
-    res.status(404).json({
-      "error": "element not found"
-    });
-  }
 });
 
 db.sequelize.sync().then(function () {
