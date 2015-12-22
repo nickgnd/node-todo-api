@@ -1,7 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser'); // => middleware
 var _ = require('underscore');
-var db = require ('./db.js');
+var db = require('./db.js');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -34,9 +34,11 @@ app.get('/todos', function(req, res) {
     }
   }
 
-  db.todo.findAll({where: where}).then(function (todos) {
+  db.todo.findAll({
+    where: where
+  }).then(function(todos) {
     res.status(200).json(todos);
-  }, function (e) {
+  }, function(e) {
     res.status(500).send();
   });
 
@@ -53,7 +55,7 @@ app.get('/todos/:id', function(req, res) {
     } else {
       res.status(404).send();
     }
-  }, function (e) {
+  }, function(e) {
     res.status(500).send();
   });
 });
@@ -66,9 +68,9 @@ app.post('/todos', function(req, res) {
   var body = _.pick(body, 'completed', 'description');
 
   // with callbacks
-  db.todo.create(body).then(function (todo) { // success callback
+  db.todo.create(body).then(function(todo) { // success callback
     res.status(201).json(todo.toJSON());
-  }, function (e) { // error callback
+  }, function(e) { // error callback
     res.status(422).json(e);
   });
 
@@ -86,45 +88,34 @@ app.post('/todos', function(req, res) {
 
 // PUT - /todos/:id
 app.put('/todos/:id', function(req, res) {
-  var body = req.body;
   var todoId = parseInt(req.params.id, 10);
-  var matchedTodo = _.findWhere(todos, {
-    id: todoId
-  });
   // whitelistening element
-  var body = _.pick(body, 'completed', 'description');
-  var validAttributes = {};
+  var body = _.pick(req.body, 'completed', 'description');
+  var attributes = {};
 
-
-  if (!matchedTodo) {
-    return res.status(404).send(); // IMPORTANT: user return to exit from the block, otherwise it continue
+  if (body.hasOwnProperty('completed')) {
+    attributes.completed = body.completed;
   }
 
-  if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
-    console.log("here");
-    console.log(_.isBoolean(body.completed));
-    validAttributes.completed = body.completed;
-  } else if (body.hasOwnProperty('completed')) {
-    // is not valid
-    return res.status(422).json({
-      "error": "unprocessable entity"
-    });
+  if (body.hasOwnProperty('description')) {
+    attributes.description = body.description;
   }
 
-  if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
-    validAttributes.description = body.description;
-  } else if (body.hasOwnProperty('description')) {
-    // is not valid
-    return res.status(422).json({
-      "error": "unprocessable entity"
-    });
-  }
+  db.todo.findById(todoId).then(function(todo) {
+    if (!!todo) {
 
+      todo.update(attributes).then(function(todo) { //follow up to todo.update(...)
+        res.status(201).json(todo.toJSON());
+      }, function(e) {
+        res.status(400).json(e);
+      });
 
-  _.extend(matchedTodo, validAttributes);
-  id = matchedTodo.id
-  res.status(204).location('/todos/' + id).send();
-
+    } else {
+      res.status(404).send();
+    }
+  }, function(e) {
+    res.status(500).send();
+  });
 
 });
 
@@ -134,8 +125,10 @@ app.delete('/todos/:id', function(req, res) {
   var todoId = parseInt(req.params.id, 10);
 
   db.todo.destroy({
-    where: { id: todoId }
-  }).then(function (rowsDeleted) {
+    where: {
+      id: todoId
+    }
+  }).then(function(rowsDeleted) {
     if (rowsDeleted === 0) {
       res.status(404).json({
         "error": "element not found"
@@ -143,13 +136,13 @@ app.delete('/todos/:id', function(req, res) {
     } else {
       res.status(204).send();
     }
-  }, function (e) {
+  }, function(e) {
     res.status(500).json(e);
   });
 
 });
 
-db.sequelize.sync().then(function () {
+db.sequelize.sync().then(function() {
   app.listen(PORT, function() {
     console.log("Express listening on PORT " + PORT);
   });
