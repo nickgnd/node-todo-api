@@ -148,14 +148,20 @@ app.post('/users', function(req, res) {
   var body = _.pick(req.body, 'email', 'password');
 
   db.user.create(body).then(function(user) { // success callback
-    res.status(201).json(user.toJSON());
+    res.status(201).json(user.toPublicJSON());
   }, function(e) { // error callback
     res.status(422).json(e);
   });
 
 });
 
-db.sequelize.sync().then(function() {
+
+// sequelize.sync() will, based on your model definitions, create any missing tables.
+// If force: true it will first drop tables before recreating them.
+// --> Use it to re-create the schema of the DB
+// --> Use it with attention in production.
+// db.sequelize.sync({force: true}).then(function() {
+db.sequelize.sync({force: true}).then(function() {
   app.listen(PORT, function() {
     console.log("Express listening on PORT " + PORT);
   });
