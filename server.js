@@ -2,6 +2,7 @@ var express = require('express');
 var bodyParser = require('body-parser'); // => middleware
 var _ = require('underscore');
 var db = require('./db.js');
+var bcrypt = require('bcrypt');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -144,13 +145,23 @@ app.delete('/todos/:id', function(req, res) {
 
 // POST - /users
 app.post('/users', function(req, res) {
-
   var body = _.pick(req.body, 'email', 'password');
 
   db.user.create(body).then(function(user) { // success callback
     res.status(201).json(user.toPublicJSON());
   }, function(e) { // error callback
     res.status(422).json(e);
+  });
+
+});
+
+app.post('/users/login', function(req, res) {
+  var body = _.pick(req.body, 'email', 'password');
+
+  db.user.authenticate(body).then(function (user) {
+    res.status(200).json(user.toPublicJSON());
+  }, function (status) {
+    res.status(status).send();
   });
 
 });
