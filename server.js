@@ -4,6 +4,9 @@ var _ = require('underscore');
 var db = require('./db.js');
 var bcrypt = require('bcrypt');
 
+// middleware
+var middleware = require('./middleware.js')(db);
+
 var app = express();
 var PORT = process.env.PORT || 3000;
 
@@ -14,11 +17,11 @@ var todoNextId = 1;
 app.use(bodyParser.json());
 
 app.get('/', function(req, res) {
-  res.send("Todo API Root");
+  res.send('Todo API Root');
 });
 
 // GET - /todos
-app.get('/todos', function(req, res) {
+app.get('/todos', middleware.requireAuthentication, function(req, res) {
   var query = req.query;
   // var filteredTodos = todos;
   var where = {}
@@ -46,7 +49,7 @@ app.get('/todos', function(req, res) {
 });
 
 // GET - /todos/:id
-app.get('/todos/:id', function(req, res) {
+app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
   var todoId = parseInt(req.params.id, 10);
 
   // search for known id
@@ -62,7 +65,7 @@ app.get('/todos/:id', function(req, res) {
 });
 
 // POST - /todos
-app.post('/todos', function(req, res) {
+app.post('/todos', middleware.requireAuthentication, function(req, res) {
   var body = req.body;
 
   // whitelistening element
@@ -75,20 +78,10 @@ app.post('/todos', function(req, res) {
     res.status(422).json(e);
   });
 
-  // // with promises ?
-  // db.todo.create({
-  //   description: body.description.trim(),
-  //   completed: body.completed
-  // }).then(function (todo) {
-  //   return res.status(201).json(todo);
-  // }).catch(function (e) {
-  //   return res.status(422).json(e);
-  // });
-
 });
 
 // PUT - /todos/:id
-app.put('/todos/:id', function(req, res) {
+app.put('/todos/:id', middleware.requireAuthentication, function(req, res) {
   var todoId = parseInt(req.params.id, 10);
   // whitelistening element
   var body = _.pick(req.body, 'completed', 'description');
@@ -122,7 +115,7 @@ app.put('/todos/:id', function(req, res) {
 
 
 // DELETE - /todos/:id
-app.delete('/todos/:id', function(req, res) {
+app.delete('/todos/:id', middleware.requireAuthentication, function(req, res) {
   var todoId = parseInt(req.params.id, 10);
 
   db.todo.destroy({
@@ -177,7 +170,7 @@ app.post('/users/login', function(req, res) {
 // --> Use it to re-create the schema of the DB
 // --> Use it with attention in production.
 // db.sequelize.sync({force: true}).then(function() {
-db.sequelize.sync({force: true}).then(function() {
+db.sequelize.sync().then(function() {
   app.listen(PORT, function() {
     console.log("Express listening on PORT " + PORT);
   });
