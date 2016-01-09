@@ -23,8 +23,14 @@ app.get('/', function(req, res) {
 // GET - /todos
 app.get('/todos', middleware.requireAuthentication, function(req, res) {
   var query = req.query;
-  // var filteredTodos = todos;
-  var where = {}
+
+  var where = {
+    userId: req.user.get('id')  // use ".get('id')"" instead of ".id" to follow
+  };                            // the 'Encapsulation' pattern:
+                                // is best practice to make the value itself
+                                // protected/private (not accessible with a
+                                // direct call like req.user.id) and instead
+                                // only provide a public getter method.
 
   if (query.hasOwnProperty('completed') && _.contains(['true', 'false'], query.completed)) {
     where.completed = eval(query.completed);
@@ -40,9 +46,9 @@ app.get('/todos', middleware.requireAuthentication, function(req, res) {
 
   db.todo.findAll({
     where: where
-  }).then(function(todos) {
+  }).then(function (todos) {
     res.status(200).json(todos);
-  }, function(e) {
+  }, function (e) {
     res.status(500).send();
   });
 
@@ -52,14 +58,19 @@ app.get('/todos', middleware.requireAuthentication, function(req, res) {
 app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
   var todoId = parseInt(req.params.id, 10);
 
-  // search for known id
-  db.todo.findById(todoId).then(function(todo) {
+  var where = {
+    userId: req.user.get('id'),
+    id: todoId
+  };
+
+  // search for known id and userId
+  db.todo.findOne({where: where}).then(function (todo) {
     if (!!todo) {
       res.status(200).json(todo.toJSON());
     } else {
       res.status(404).send();
     }
-  }, function(e) {
+  }, function (e) {
     res.status(500).send();
   });
 });
@@ -91,6 +102,10 @@ app.post('/todos', middleware.requireAuthentication, function(req, res) {
 // PUT - /todos/:id
 app.put('/todos/:id', middleware.requireAuthentication, function(req, res) {
   var todoId = parseInt(req.params.id, 10);
+  var where = {
+    userId: req.user.get('id'),
+    id: todoId
+  };
   // whitelistening element
   var body = _.pick(req.body, 'completed', 'description');
   var attributes = {};
@@ -103,7 +118,7 @@ app.put('/todos/:id', middleware.requireAuthentication, function(req, res) {
     attributes.description = body.description;
   }
 
-  db.todo.findById(todoId).then(function(todo) {
+  db.todo.findOne({where: where}).then(function(todo) {
     if (!!todo) {
 
       todo.update(attributes).then(function(todo) { //follow up to todo.update(...)
@@ -125,11 +140,13 @@ app.put('/todos/:id', middleware.requireAuthentication, function(req, res) {
 // DELETE - /todos/:id
 app.delete('/todos/:id', middleware.requireAuthentication, function(req, res) {
   var todoId = parseInt(req.params.id, 10);
+  var where = {
+    userId: req.user.get('id'),
+    id: todoId
+  };
 
   db.todo.destroy({
-    where: {
-      id: todoId
-    }
+    where: where
   }).then(function(rowsDeleted) {
     if (rowsDeleted === 0) {
       res.status(404).json({
