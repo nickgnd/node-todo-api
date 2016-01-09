@@ -66,15 +66,23 @@ app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
 
 // POST - /todos
 app.post('/todos', middleware.requireAuthentication, function(req, res) {
-  var body = req.body;
-
   // whitelistening element
-  var body = _.pick(body, 'completed', 'description');
+  var body = _.pick(req.body, 'completed', 'description');
 
   // with callbacks
   db.todo.create(body).then(function(todo) { // success callback
-    res.status(201).json(todo.toJSON());
-  }, function(e) { // error callback
+
+    // req.user is add after the authentication (see middleware)
+    req.user.addTodo(todo).then(function () {
+
+      // we need to Reload todo's instance beacuse we add to it the association
+      // with the user
+      return todo.reload();
+
+    }).then(function (todo) {
+      res.status(201).json(todo.toJSON());
+    });
+  }, function (e) { // error callback
     res.status(422).json(e);
   });
 
@@ -170,7 +178,7 @@ app.post('/users/login', function(req, res) {
 // --> Use it to re-create the schema of the DB
 // --> Use it with attention in production.
 // db.sequelize.sync({force: true}).then(function() {
-db.sequelize.sync().then(function() {
+db.sequelize.sync({force: true}).then(function() {
   app.listen(PORT, function() {
     console.log("Express listening on PORT " + PORT);
   });
